@@ -1,6 +1,6 @@
 {
   "name": "track-dl",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Search iTunes, download from YouTube, merge metadata with album art",
   "main": "index.js",
   "bin": {
