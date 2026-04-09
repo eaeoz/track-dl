@@ -1,6 +1,6 @@
 {
   "name": "track-dl",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Search Spotify, download from YouTube, merge metadata with album art",
   "main": "index.js",
   "bin": {
