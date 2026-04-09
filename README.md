@@ -5,8 +5,6 @@ Search iTunes, download from YouTube, and merge metadata with album art.
 ## Requirements
 
 - [Node.js](https://nodejs.org/) (v14+)
-- [FFmpeg](https://ffmpeg.org/) installed system-wide
-- Spotify API credentials
 
 ## Setup
 
@@ -15,15 +13,7 @@ Search iTunes, download from YouTube, and merge metadata with album art.
    npm install
    ```
 
-2. **Set Spotify credentials** (Windows System environment variables):
-   - `SPOTIFY_CLIENT_ID`
-   - `SPOTIFY_CLIENT_SECRET`
-   
-   Get credentials at: https://developer.spotify.com/dashboard/
-   
-   > **Note:** Set at Windows System level (not .env file). Restart terminal after setting.
-
-3. **Ensure yt-dlp.exe exists** in the project folder.
+   This will download ffmpeg-static and yt-dlp.exe automatically.
 
 ## Usage
 
@@ -68,11 +58,5 @@ track-dl --update
 
 ## Troubleshooting
 
-### FFmpeg not found
-Install FFmpeg and ensure it's in your system PATH.
-
-### Spotify credentials not working
-Verify env vars are set at Windows System level, then restart your terminal.
-
-### yt-dlp.exe missing
+### yt-dlp.exe not found
 Run `track-dl -u` to download the latest version.

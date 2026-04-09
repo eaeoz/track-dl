@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node index.js",
+    "postinstall": "node -e \"const fs=require('fs');const https=require('https');const path=require('path');const file=path.join(__dirname,'yt-dlp.exe');function download(u){https.get(u,(r)=>{if(r.statusCode===302&&r.headers.location){download(r.headers.location)}else{r.pipe(fs.createWriteStream(file)).on('finish',()=>console.log('Downloaded yt-dlp.exe'))}}).on('error',()=>fs.existsSync(file)&&fs.unlinkSync(file))}if(!fs.existsSync(file)){download('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe')}\"",
     "update-yt-dlp": "node -e \"const fs=require('fs');const https=require('https');const file=fs.createWriteStream('yt-dlp.exe');https.get('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',(r)=>r.pipe(file).on('finish',()=>console.log('Updated yt-dlp.exe')))\"",
     "test": "echo \\\"Error: no test specified\\\" && exit 1"
   },
@@ -15,11 +16,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "spotify-web-api-node": "^5.0.2",
-    "fluent-ffmpeg": "^2.1.3",
+    "axios": "^1.7.9",
     "inquirer": "^8.2.7",
-    "dotenv": "^16.4.7",
-    "axios": "^1.7.9"
+    "ffmpeg-static": "^5.2.0"
   },
   "repository": {
     "type": "git",
