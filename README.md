@@ -2,18 +2,27 @@
 
 Search iTunes, download from YouTube, and merge metadata with album art.
 
+## Quick Start
+
+### Run without installation (npx)
+```bash
+npx track-dl "song name"
+```
+
+### Install globally (recommended)
+```bash
+npm install -g track-dl
+track-dl "song name"
+```
+
+### Check version
+```bash
+track-dl --version
+```
+
 ## Requirements
 
 - [Node.js](https://nodejs.org/) (v14+)
-
-## Setup
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-   This will download ffmpeg-static and yt-dlp.exe automatically.
 
 ## Usage
 
@@ -60,3 +69,21 @@ track-dl --update
 
 ### yt-dlp.exe not found
 Run `track-dl -u` to download the latest version.
+
+## Setup (for local development)
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+   This will download ffmpeg-static and yt-dlp.exe automatically.
+
+
+## Author
+
+Sedat ERGOZ [@eaeoz](https://github.com/eaeoz)
+
+## License
+
+MIT License
