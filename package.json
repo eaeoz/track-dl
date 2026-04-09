@@ -1,7 +1,7 @@
 {
   "name": "track-dl",
-  "version": "1.0.3",
-  "description": "Search Spotify, download from YouTube, merge metadata with album art",
+  "version": "1.0.4",
+  "description": "Search iTunes, download from YouTube, merge metadata with album art",
   "main": "index.js",
   "bin": {
     "track-dl": "index.js"
@@ -12,7 +12,7 @@
     "update-yt-dlp": "node -e \"const fs=require('fs');const https=require('https');const file=fs.createWriteStream('yt-dlp.exe');https.get('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',(r)=>r.pipe(file).on('finish',()=>console.log('Updated yt-dlp.exe')))\"",
     "test": "echo \\\"Error: no test specified\\\" && exit 1"
   },
-  "keywords": ["track-dl", "spotify", "youtube", "download", "music", "mp3"],
+  "keywords": ["track-dl", "itunes", "youtube", "download", "music", "mp3"],
   "author": "",
   "license": "MIT",
   "dependencies": {
