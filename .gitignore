@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.env
+.env.local
+.DS_Store
+dist/
+build/
+!yt-dlp.exe
+*.exe
+*.mp3
+*.flac
+*.wav
