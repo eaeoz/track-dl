@@ -3,26 +3,80 @@
 const inquirer = require('inquirer');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 const { searchiTunes } = require('./lib/itunes');
 const { searchYouTube, downloadYouTubeAudioWithTemp } = require('./lib/youtube');
 const { mergeMetadata } = require('./lib/merger');
+
+const packageJson = require('./package.json');
+
+async function updateYtDlp() {
+  const exePath = path.join(__dirname, 'yt-dlp.exe');
+  console.log('Updating yt-dlp.exe...');
+  
+  const file = fs.createWriteStream(exePath);
+  
+  return new Promise((resolve, reject) => {
+    https.get('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe', (response) => {
+      response.pipe(file);
+      file.on('finish', () => {
+        file.close();
+        console.log('yt-dlp.exe updated successfully.');
+        resolve();
+      });
+    }).on('error', (err) => {
+      fs.unlink(exePath, () => {});
+      reject(err);
+    });
+  });
+}
 
 async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
-    console.log('Usage: node index.js "song name" [itunes_limit] [youtube_limit]');
-    console.log('Example: node index.js "Shape of You" 5 5');
+    console.log(`track-dl v${packageJson.version}`);
+    console.log('');
+    console.log('Usage: track-dl "song name" [itunes_limit] [youtube_limit]');
+    console.log('Example: track-dl "Shape of You" 5 3');
     console.log('');
     console.log('Options:');
-    console.log('  itunes_limit   - Number of iTunes results (3, 5, or 10). Default: 3');
-    console.log('  youtube_limit  - Number of YouTube results (3, 5, or 10). Default: 3');
+    console.log('  -v, --version          Show version number');
+    console.log('  -u, --update           Update yt-dlp.exe to latest version');
+    console.log('  itunes_limit           Number of iTunes results (3, 5, or 10). Default: 3');
+    console.log('  youtube_limit          Number of YouTube results (3, 5, or 10). Default: 3');
     process.exit(1);
   }
 
-  const query = args[0];
-  const itunesLimit = [3, 5, 10].includes(parseInt(args[1])) ? parseInt(args[1]) : 3;
-  const youtubeLimit = [3, 5, 10].includes(parseInt(args[2])) ? parseInt(args[2]) : 3;
+  let query = args[0];
+  let itunesLimit = 3;
+  let youtubeLimit = 3;
+  let argIndex = 0;
+
+  if (query === '-v' || query === '--version') {
+    console.log(`track-dl v${packageJson.version}`);
+    process.exit(0);
+  }
+
+  if (query === '-u' || query === '--update') {
+    try {
+      await updateYtDlp();
+      process.exit(0);
+    } catch (err) {
+      console.error('Failed to update yt-dlp:', err.message);
+      process.exit(1);
+    }
+  }
+
+  argIndex = 1;
+  if (args[1] && [3, 5, 10].includes(parseInt(args[1]))) {
+    itunesLimit = parseInt(args[1]);
+    argIndex = 2;
+  }
+
+  if (args[argIndex] && [3, 5, 10].includes(parseInt(args[argIndex]))) {
+    youtubeLimit = parseInt(args[argIndex]);
+  }
 
   console.log('\n=== Searching iTunes ===');
   const itunesResults = await searchiTunes(query, itunesLimit);
