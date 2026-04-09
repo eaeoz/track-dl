@@ -73,7 +73,7 @@ async function main() {
     console.log('  -e, --export-cookies   Export cookies when setting browser (use with -b)');
     console.log('  itunes_limit           Number of iTunes results (3, 5, or 10). Default: 3');
     console.log('  youtube_limit          Number of YouTube results (3, 5, or 10). Default: 3');
-    console.log(`  cookies                YouTube cookies file status: ${cookiesStatus}`);
+    console.log(`  cookies file           YouTube cookies file: ${config.cookiesFile || 'none'}`);
     process.exit(1);
   }
 
@@ -100,7 +100,7 @@ async function main() {
     console.log('  -e, --export-cookies   Export cookies when setting browser (use with -b)');
     console.log('  itunes_limit           Number of iTunes results (3, 5, or 10). Default: 3');
     console.log('  youtube_limit          Number of YouTube results (3, 5, or 10). Default: 3');
-    console.log(`  cookies                YouTube cookies file status: ${cookiesStatus}`);
+    console.log(`  cookies file           YouTube cookies file: ${config.cookiesFile || 'none'}`);
     process.exit(0);
   }
 
