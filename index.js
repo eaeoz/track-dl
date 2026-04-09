@@ -10,6 +10,23 @@ const { mergeMetadata } = require('./lib/merger');
 
 const packageJson = require('./package.json');
 
+const CONFIG_PATH = path.join(__dirname, '.track-dl-config.json');
+
+function loadConfig() {
+  try {
+    if (fs.existsSync(CONFIG_PATH)) {
+      return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    }
+  } catch {}
+  return { browser: null, cookiesFile: null };
+}
+
+function saveConfig(config) {
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+}
+
+const config = loadConfig();
+
 async function updateYtDlp() {
   const exePath = path.join(__dirname, 'yt-dlp.exe');
   console.log('Downloading yt-dlp.exe...');
@@ -43,6 +60,8 @@ async function main() {
   
   if (args.length === 0) {
     console.log(`track-dl v${packageJson.version}`);
+    const browserStatus = config.browser ? config.browser : 'disabled';
+    const cookiesStatus = config.cookiesFile ? 'enabled' : 'disabled';
     console.log('');
     console.log('Usage: track-dl "song name" [itunes_limit] [youtube_limit]');
     console.log('Example: track-dl "Shape of You" 5 3');
@@ -50,22 +69,42 @@ async function main() {
     console.log('Options:');
     console.log('  -v, --version          Show version number');
     console.log('  -u, --update           Update yt-dlp.exe to latest version');
+    console.log(`  -b, --browser          Browser for YouTube cookies (chrome, firefox, edge, disabled). Current: ${browserStatus}`);
+    console.log('  -e, --export-cookies   Export cookies when setting browser (use with -b)');
     console.log('  itunes_limit           Number of iTunes results (3, 5, or 10). Default: 3');
     console.log('  youtube_limit          Number of YouTube results (3, 5, or 10). Default: 3');
+    console.log(`  cookies                YouTube cookies file status: ${cookiesStatus}`);
     process.exit(1);
   }
 
-  let query = args[0];
-  let itunesLimit = 3;
-  let youtubeLimit = 3;
-  let argIndex = 0;
+  const firstArg = args[0];
 
-  if (query === '-v' || query === '--version') {
+  if (firstArg === '-v' || firstArg === '--version') {
     console.log(`track-dl v${packageJson.version}`);
     process.exit(0);
   }
 
-  if (query === '-u' || query === '--update') {
+  if (firstArg === '-h' || firstArg === '--help') {
+    const browserStatus = config.browser ? config.browser : 'disabled';
+    const cookiesStatus = config.cookiesFile ? 'enabled' : 'disabled';
+    console.log(`track-dl v${packageJson.version}`);
+    console.log('');
+    console.log('Usage: track-dl "song name" [itunes_limit] [youtube_limit]');
+    console.log('Example: track-dl "Shape of You" 5 3');
+    console.log('');
+    console.log('Options:');
+    console.log('  -v, --version          Show version number');
+    console.log('  -u, --update           Update yt-dlp.exe to latest version');
+    console.log('  -h, --help             Show this help message');
+    console.log(`  -b, --browser          Browser for YouTube cookies (chrome, firefox, edge, disabled). Current: ${browserStatus}`);
+    console.log('  -e, --export-cookies   Export cookies when setting browser (use with -b)');
+    console.log('  itunes_limit           Number of iTunes results (3, 5, or 10). Default: 3');
+    console.log('  youtube_limit          Number of YouTube results (3, 5, or 10). Default: 3');
+    console.log(`  cookies                YouTube cookies file status: ${cookiesStatus}`);
+    process.exit(0);
+  }
+
+  if (firstArg === '-u' || firstArg === '--update') {
     try {
       await updateYtDlp();
       process.exit(0);
@@ -75,14 +114,85 @@ async function main() {
     }
   }
 
+  let query = args[0];
+  let itunesLimit = 3;
+  let youtubeLimit = 3;
+  let argIndex = 0;
+
+  const browserIndex = args.indexOf('-b') !== -1 ? args.indexOf('-b') : args.indexOf('--browser');
+  const exportCookies = args.indexOf('-e') !== -1 || args.indexOf('--export-cookies') !== -1;
+
+  if (browserIndex !== -1 && args[browserIndex + 1]) {
+    const newBrowser = args[browserIndex + 1].toLowerCase();
+    if (newBrowser === 'disabled') {
+      config.browser = null;
+      saveConfig(config);
+      console.log('Browser cookies disabled.');
+      process.exit(0);
+    }
+    if (['chrome', 'firefox', 'edge'].includes(newBrowser)) {
+      config.browser = newBrowser;
+      saveConfig(config);
+      console.log(`Default browser set to: ${config.browser}`);
+      
+      if (exportCookies) {
+        const cookiesFile = path.join(__dirname, 'cookies.txt');
+        console.log(`Exporting cookies from ${config.browser} to ${cookiesFile}...`);
+        try {
+          const YTDLP_PATH = path.join(__dirname, 'yt-dlp.exe');
+          require('child_process').execSync(`"${YTDLP_PATH}" --cookies-from-browser ${config.browser} --cookies ${cookiesFile}`, { stdio: 'inherit' });
+          config.cookiesFile = cookiesFile;
+          saveConfig(config);
+          console.log('Cookies exported successfully!');
+          process.exit(0);
+        } catch (err) {
+          console.error('Failed to export cookies:', err.message);
+          process.exit(1);
+        }
+      }
+      
+      const remainingArgs = args.slice(browserIndex + 2);
+      if (remainingArgs.length === 0) {
+        process.exit(0);
+      }
+    } else {
+      console.error('Invalid browser. Use: chrome, firefox, edge, or disabled');
+      process.exit(1);
+    }
+  }
+
+  const queryArgsStart = browserIndex !== -1 ? browserIndex + 2 : 0;
+  const remainingArgs = args.slice(queryArgsStart);
+  if (remainingArgs.length === 0) {
+    const browserStatus = config.browser ? config.browser : 'disabled';
+    const cookiesStatus = config.cookiesFile ? 'enabled' : 'disabled';
+    console.log(`track-dl v${packageJson.version}`);
+    console.log('');
+    console.log('Usage: track-dl "song name" [itunes_limit] [youtube_limit]');
+    console.log('Example: track-dl "Shape of You" 5 3');
+    console.log('');
+    console.log('Options:');
+    console.log('  -v, --version          Show version number');
+    console.log('  -u, --update           Update yt-dlp.exe to latest version');
+    console.log(`  -b, --browser          Browser for YouTube cookies (chrome, firefox, edge, disabled). Current: ${browserStatus}`);
+    console.log('  -e, --export-cookies   Export cookies when setting browser (use with -b)');
+    console.log('  itunes_limit           Number of iTunes results (3, 5, or 10). Default: 3');
+    console.log('  youtube_limit          Number of YouTube results (3, 5, or 10). Default: 3');
+    console.log(`  cookies                YouTube cookies file status: ${cookiesStatus}`);
+    process.exit(1);
+  }
+  query = remainingArgs[0];
+  itunesLimit = 3;
+  youtubeLimit = 3;
   argIndex = 1;
-  if (args[1] && [3, 5, 10].includes(parseInt(args[1]))) {
-    itunesLimit = parseInt(args[1]);
+
+  if (remainingArgs[1] && [3, 5, 10].includes(parseInt(remainingArgs[1]))) {
+    itunesLimit = parseInt(remainingArgs[1]);
     argIndex = 2;
   }
 
-  if (args[argIndex] && [3, 5, 10].includes(parseInt(args[argIndex]))) {
-    youtubeLimit = parseInt(args[argIndex]);
+  if (remainingArgs[argIndex] && [3, 5, 10].includes(parseInt(remainingArgs[argIndex]))) {
+    youtubeLimit = parseInt(remainingArgs[argIndex]);
   }
 
   console.log('\n=== Searching iTunes ===');
@@ -115,7 +225,7 @@ async function main() {
   const ytQuery = `${selectediTunes.artist} ${selectediTunes.name} official audio`;
   console.log(`\n=== Searching YouTube for: "${ytQuery}" ===`);
   
-  const youtubeResults = await searchYouTube(ytQuery, youtubeLimit);
+  const youtubeResults = await searchYouTube(ytQuery, youtubeLimit, config.browser, config.cookiesFile);
   
   if (youtubeResults.length === 0) {
     console.log('No results from YouTube.');
@@ -141,7 +251,7 @@ async function main() {
   console.log(`\nSelected: ${selectedYoutube.title}`);
   console.log('\n=== Downloading audio from YouTube ===');
 
-  const tempAudioPath = await downloadYouTubeAudioWithTemp(selectedYoutube.url);
+  const tempAudioPath = await downloadYouTubeAudioWithTemp(selectedYoutube.url, config.browser, config.cookiesFile);
   
   if (!tempAudioPath) {
     console.log('Failed to download audio.');
