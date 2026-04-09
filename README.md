@@ -72,13 +72,13 @@ Run `track-dl -u` to download the latest version.
 
 ## Setup (for local development)
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+**Install dependencies:**
 
-   This will download ffmpeg-static and yt-dlp.exe automatically.
+```bash
+npm install
+```
 
+This will download ffmpeg-static and yt-dlp.exe automatically.
 
 ## Author
 
