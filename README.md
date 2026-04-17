@@ -1,18 +1,18 @@
 # track-dl
 
-Search iTunes, download from YouTube, and merge metadata with album art.
+Search and download music from YouTube using AI to find the best match.
 
 ## Quick Start
 
 ### Run without installation (npx)
 ```bash
-npx track-dl "song name"
+npx track-dl song name
 ```
 
 ### Install globally (recommended)
 ```bash
 npm install -g track-dl
-track-dl "song name"
+track-dl song name
 ```
 
 ### Check version
@@ -28,92 +28,48 @@ track-dl --version
 ## Usage
 
 ```bash
-track-dl "song name" [itunes_limit] [youtube_limit]
+track-dl song name
 ```
 
 ### Examples
 
 ```bash
 # Basic search
-track-dl "Shape of You"
+track-dl god is a dj
 
-# With custom result limits
-track-dl "Shape of You" 5 3
+# Search with any query
+track-dl shape of you
 ```
 
-### Options
+## Options
 
 | Option | Description |
 |--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe to latest version |
-| `-h, --help` | Show this help message |
-| `-b, --browser` | Browser for YouTube cookies (chrome, firefox, edge, disabled). Default: disabled |
-| `-e, --export-cookies` | Export cookies when setting browser (use with -b) |
-| `itunes_limit` | Number of iTunes results (3, 5, or 10). Default: 3 |
-| `youtube_limit` | Number of YouTube results (3, 5, or 10). Default: 3 |
+| `--auth <token>` | Set Puter AI auth token for better matching |
 
-## YouTube Cookies
+## Puter AI
 
-Some YouTube videos require cookies to download. By default, cookies are disabled.
-
-### Setting up cookies
+For better song matching, get a free auth token from https://puter.com/dashboard and set it:
 
 ```bash
-# Enable cookies from Firefox and export to file
-track-dl -b firefox -e
-
-# Enable cookies from Chrome
-track-dl -b chrome
-
-# Enable cookies from Edge
-track-dl -b edge
-
-# Disable cookies
-track-dl -b disabled
+track-dl --auth YOUR_TOKEN_HERE
 ```
 
-When you set a browser, the setting is saved to `.track-dl-config.json` and persists for future runs.
+Then search normally - AI will extract correct artist and title from YouTube results.
 
-The `-e` flag exports cookies from your browser to a local file, which can help avoid issues with some browsers (like Firefox DPAPI encryption problems).
+## How It Works
 
-## Commands
-
-### Update yt-dlp
-
-```bash
-track-dl -u
-# or
-track-dl --update
-```
+1. **Search**: Searches YouTube with your query
+2. **Match**: Uses algorithm (or Puter AI if token set) to find best match
+3. **Download**: Automatically downloads the best match (no prompts)
+4. **Save**: Saves MP3 file as `{artist} - {title}.mp3`
 
 ## Output
 
-- MP3 file saved to the **project directory** (where track-dl is installed)
+- MP3 file saved to the **project directory**
 - File naming: `{artist} - {title}.mp3`
-- Includes metadata: title, artist, album, album art
-
-## Configuration
-
-Settings are stored in `.track-dl-config.json` in the project directory:
-
-```json
-{
-  "browser": "firefox",
-  "cookiesFile": "cookies.txt"
-}
-```
-
-## Troubleshooting
-
-### yt-dlp.exe not found
-Run `track-dl -u` to download the latest version.
-
-### "Requested format is not available" error
-This usually means YouTube requires cookies. Set a browser with `-b chrome`, `-b firefox`, or `-b edge`.
-
-### Download fails with cookies
-The tool will automatically retry without cookies if the first attempt fails.
 
 ## Setup (for local development)
 

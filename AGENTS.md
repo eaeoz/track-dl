@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Project: Node.js CLI tool to search iTunes, download from YouTube, merge metadata with album art.
+Project: Node.js CLI tool to search YouTube and download music using AI.
 
 ## Setup
 
@@ -11,12 +11,11 @@ Project: Node.js CLI tool to search iTunes, download from YouTube, merge metadat
 ## Run
 
 ```bash
-node index.js "song name" [itunes_limit] [youtube_limit]
-# Example: node index.js "Shape of You" 5 3
+node index.js song name
+# Example: node index.js god is a dj
 ```
 
-- Valid limits: 3, 5, 10
-- Output: MP3 saved to project directory
+- Output: MP3 saved to project directory as `{artist} - {title}.mp3`
 
 ## Options
 
@@ -24,33 +23,29 @@ node index.js "song name" [itunes_limit] [youtube_limit]
 |--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe to latest version |
-| `-h, --help` | Show help message |
-| `-b, --browser` | Browser for YouTube cookies (chrome, firefox, edge, disabled) |
-| `-e, --export-cookies` | Export cookies when setting browser |
+| `--auth <token>` | Set Puter AI auth token |
+
+## Puter AI
+
+To use Puter AI for better song matching:
+1. Get token from https://puter.com/dashboard
+2. Run: `track-dl --auth YOUR_TOKEN`
+
+Then search without quotes: `track-dl god is a dj`
 
 ## YouTube Cookies
 
 ```bash
-# Enable cookies from Firefox and export
-track-dl -b firefox -e
+# Enable cookies from Firefox
+track-dl -b firefox
 
 # Disable cookies
 track-dl -b disabled
 ```
 
-## Architecture
+## How It Works
 
-```
-index.js        - CLI entry, inquirer prompts
-lib/itunes.js   - iTunes search + metadata
-lib/youtube.js  - YouTube search + download (local yt-dlp.exe)
-lib/merger.js   - Merge audio + iTunes metadata + cover via ffmpeg
-yt-dlp.exe      - Local binary (must exist in project root)
-.track-dl-config.json - Saved browser/cookies settings
-```
-
-## Key Quirks
-
-- Uses local `yt-dlp.exe` via `child_process.exec`
-- Config saved to `.track-dl-config.json` in project directory
-- Downloads retry without cookies if cookie-based download fails
+1. Searches YouTube with user query
+2. Uses AI to find best match (extracts artist/title)
+3. Auto-downloads to MP3
+4. Saves as `{artist} - {title}.mp3`
