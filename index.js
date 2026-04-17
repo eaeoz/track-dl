@@ -5,25 +5,9 @@ const fs = require('fs');
 const https = require('https');
 const { searchYouTube, downloadYouTubeAudioWithTemp } = require('./lib/youtube');
 const { mergeMetadata } = require('./lib/merger');
-const { findBestSongMatch } = require('./lib/puter');
+const { findBestSongMatch } = require('./lib/metadata');
 
 const packageJson = require('./package.json');
-
-const TOKEN_FILE = path.join(__dirname, '.puter-token');
-
-function savePuterToken(token) {
-  fs.writeFileSync(TOKEN_FILE, token.trim());
-  console.log('Puter token saved (will fill missing year/genre)');
-}
-
-function loadPuterToken() {
-  try {
-    if (fs.existsSync(TOKEN_FILE)) {
-      return fs.readFileSync(TOKEN_FILE, 'utf8').trim();
-    }
-  } catch {}
-  return '';
-}
 
 async function updateYtDlp() {
   const exePath = path.join(__dirname, 'yt-dlp.exe');
@@ -78,11 +62,6 @@ async function main() {
       console.error('Failed to update:', err.message);
       process.exit(1);
     }
-  }
-
-  if (firstArg === '--auth' && args[1]) {
-    savePuterToken(args[1]);
-    process.exit(0);
   }
 
   const query = args.join(' ');

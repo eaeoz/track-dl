@@ -15,25 +15,24 @@ node index.js song name
 # Example: node index.js god is a dj
 ```
 
-- Output: MP3 saved to project directory as `{artist} - {title}.mp3`
+- Output: MP3 saved as `{artist} - {title}.mp3`
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
-| `-v, --version` | Show version number |
-| `-u, --update` | Update yt-dlp.exe to latest version |
+| `-v, --version` | Show version |
+| `-u, --update` | Update yt-dlp.exe |
 
 ## How It Works
 
-1. Searches YouTube with user query
-2. Fetches metadata from Deezer/iTunes (artist, title, album, year, genre, cover)
-3. Matches best YouTube result using metadata
+1. Searches YouTube with query
+2. Fetches metadata from Deezer -> iTunes (artist, title, album, year, genre, cover)
+3. Matches best YouTube result
 4. Downloads audio automatically
-5. Embeds metadata and album cover into MP3
+5. Embeds metadata + album cover into MP3
 
 ## APIs Used
 
-- **Deezer**: Primary - provides artist, title, album, year, genre, cover
-- **iTunes**: Backup - provides artist, title, album, year, genre, cover
-- **LastFM**: Fallback - provides artist, title only
+- **Deezer**: Primary - artist, title, album, year, genre, cover
+- **iTunes**: Backup - same fields
