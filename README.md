@@ -1,15 +1,15 @@
 # track-dl
 
-Search and download music from YouTube using AI to find the best match.
+Search and download music from YouTube with automatic metadata and album cover.
 
 ## Quick Start
 
-### Run without installation (npx)
+### Run without installation
 ```bash
-npx track-dl song name
+node index.js song name
 ```
 
-### Install globally (recommended)
+### Install globally
 ```bash
 npm install -g track-dl
 track-dl song name
@@ -36,9 +36,8 @@ track-dl song name
 ```bash
 # Basic search
 track-dl god is a dj
-
-# Search with any query
 track-dl shape of you
+track-dl superman eminem
 ```
 
 ## Options
@@ -47,33 +46,29 @@ track-dl shape of you
 |--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe to latest version |
-| `--auth <token>` | Set Puter AI auth token for better matching |
 
-## Puter AI
+## Features
 
-For better song matching, get a free auth token from https://puter.com/dashboard and set it:
-
-```bash
-track-dl --auth YOUR_TOKEN_HERE
-```
-
-Then search normally - AI will extract correct artist and title from YouTube results.
+- **Free APIs**: Uses Deezer, iTunes, and LastFM APIs (no API keys needed)
+- **Auto metadata**: Gets artist, title, album, year, and genre automatically
+- **Album cover**: Downloads and embeds album art from Deezer/iTunes
+- **Smart matching**: Matches YouTube results based on artist/song info
 
 ## How It Works
 
 1. **Search**: Searches YouTube with your query
-2. **Match**: Uses algorithm (or Puter AI if token set) to find best match
-3. **Download**: Automatically downloads the best match (no prompts)
-4. **Save**: Saves MP3 file as `{artist} - {title}.mp3`
+2. **Fetch metadata**: Gets song info from Deezer (genre, cover, album, year)
+3. **Match**: Finds best YouTube match using metadata
+4. **Download**: Automatically downloads audio
+5. **Merge**: Embeds metadata and album cover into MP3
 
 ## Output
 
 - MP3 file saved to the **project directory**
 - File naming: `{artist} - {title}.mp3`
+- Includes: title, artist, album, year, genre, cover art
 
-## Setup (for local development)
-
-**Install dependencies:**
+## Setup
 
 ```bash
 npm install

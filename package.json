@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@heyputer/puter.js": "^2.2.15",
+    "axios": "^1.7.9",
     "ffmpeg-static": "^5.2.0"
   },
   "repository": {

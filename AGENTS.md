@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Project: Node.js CLI tool to search YouTube and download music using AI.
+Project: Node.js CLI tool to search YouTube and download music with auto metadata.
 
 ## Setup
 
@@ -23,29 +23,17 @@ node index.js song name
 |--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe to latest version |
-| `--auth <token>` | Set Puter AI auth token |
-
-## Puter AI
-
-To use Puter AI for better song matching:
-1. Get token from https://puter.com/dashboard
-2. Run: `track-dl --auth YOUR_TOKEN`
-
-Then search without quotes: `track-dl god is a dj`
-
-## YouTube Cookies
-
-```bash
-# Enable cookies from Firefox
-track-dl -b firefox
-
-# Disable cookies
-track-dl -b disabled
-```
 
 ## How It Works
 
 1. Searches YouTube with user query
-2. Uses AI to find best match (extracts artist/title)
-3. Auto-downloads to MP3
-4. Saves as `{artist} - {title}.mp3`
+2. Fetches metadata from Deezer/iTunes (artist, title, album, year, genre, cover)
+3. Matches best YouTube result using metadata
+4. Downloads audio automatically
+5. Embeds metadata and album cover into MP3
+
+## APIs Used
+
+- **Deezer**: Primary - provides artist, title, album, year, genre, cover
+- **iTunes**: Backup - provides artist, title, album, year, genre, cover
+- **LastFM**: Fallback - provides artist, title only

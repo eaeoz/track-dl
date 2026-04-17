@@ -5,7 +5,7 @@ const fs = require('fs');
 const https = require('https');
 const { searchYouTube, downloadYouTubeAudioWithTemp } = require('./lib/youtube');
 const { mergeMetadata } = require('./lib/merger');
-const { findBestSongMatch, saveConfig: savePuterConfig } = require('./lib/puter');
+const { findBestSongMatch } = require('./lib/puter');
 
 const packageJson = require('./package.json');
 
@@ -17,7 +17,7 @@ function loadConfig() {
       return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
     }
   } catch {}
-  return { puterToken: null };
+  return {};
 }
 
 function saveConfig(config) {
@@ -81,14 +81,6 @@ async function main() {
     }
   }
 
-  if (firstArg === '--auth' && args[1]) {
-    const token = args[1];
-    config.puterToken = token;
-    savePuterConfig(config);
-    console.log('Puter auth token saved.');
-    process.exit(0);
-  }
-
   let query = args.join(' ');
 
   console.log(`\n=== Searching YouTube for: "${query}" ===`);
@@ -100,13 +92,12 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\nFound ${youtubeResults.length} results. Using AI to find the best match...`);
+  console.log(`\nFound ${youtubeResults.length} results. Finding best match...`);
 
   const bestMatch = await findBestSongMatch(query, youtubeResults);
   const selectedYoutube = bestMatch.video;
 
   console.log(`\nBest match: ${bestMatch.artist} - ${bestMatch.title}`);
-  console.log(`Reason: ${bestMatch.reason}`);
 
   console.log('\n=== Downloading audio from YouTube ===');
 
@@ -126,8 +117,10 @@ async function main() {
   const metadata = {
     title: bestMatch.title,
     artist: bestMatch.artist,
-    album: '',
-    albumArt: ''
+    album: bestMatch.album || '',
+    year: bestMatch.year || '',
+    genre: bestMatch.genre || '',
+    albumArt: bestMatch.coverUrl || ''
   };
 
   try {
