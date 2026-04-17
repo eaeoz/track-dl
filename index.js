@@ -9,22 +9,21 @@ const { findBestSongMatch } = require('./lib/puter');
 
 const packageJson = require('./package.json');
 
-const CONFIG_PATH = path.join(__dirname, '.track-dl-config.json');
+const TOKEN_FILE = path.join(__dirname, '.puter-token');
 
-function loadConfig() {
+function savePuterToken(token) {
+  fs.writeFileSync(TOKEN_FILE, token.trim());
+  console.log('Puter token saved (will fill missing year/genre)');
+}
+
+function loadPuterToken() {
   try {
-    if (fs.existsSync(CONFIG_PATH)) {
-      return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    if (fs.existsSync(TOKEN_FILE)) {
+      return fs.readFileSync(TOKEN_FILE, 'utf8').trim();
     }
   } catch {}
-  return {};
+  return '';
 }
-
-function saveConfig(config) {
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-}
-
-const config = loadConfig();
 
 async function updateYtDlp() {
   const exePath = path.join(__dirname, 'yt-dlp.exe');
@@ -40,7 +39,7 @@ async function updateYtDlp() {
           response.pipe(file);
           file.on('finish', () => {
             file.close();
-            console.log('yt-dlp.exe downloaded successfully.');
+            console.log('yt-dlp.exe downloaded');
             resolve();
           });
         }
@@ -57,7 +56,7 @@ async function updateYtDlp() {
 async function main() {
   const args = process.argv.slice(2);
   
-  if (args.length === 0) {
+  if (!args.length) {
     console.log(`track-dl v${packageJson.version}`);
     console.log('Usage: track-dl song name');
     console.log('Example: track-dl god is a dj');
@@ -76,39 +75,47 @@ async function main() {
       await updateYtDlp();
       process.exit(0);
     } catch (err) {
-      console.error('Failed to update yt-dlp:', err.message);
+      console.error('Failed to update:', err.message);
       process.exit(1);
     }
   }
 
-  let query = args.join(' ');
+  if (firstArg === '--auth' && args[1]) {
+    savePuterToken(args[1]);
+    process.exit(0);
+  }
 
-  console.log(`\n=== Searching YouTube for: "${query}" ===`);
+  const query = args.join(' ');
+
+  console.log(`\n=== Searching YouTube: "${query}" ===`);
   
   const youtubeResults = await searchYouTube(query, 5);
   
-  if (youtubeResults.length === 0) {
-    console.log('No results from YouTube.');
+  if (!youtubeResults.length) {
+    console.log('No results');
     process.exit(1);
   }
 
-  console.log(`\nFound ${youtubeResults.length} results. Finding best match...`);
+  console.log(`Found ${youtubeResults.length} results`);
 
   const bestMatch = await findBestSongMatch(query, youtubeResults);
   const selectedYoutube = bestMatch.video;
 
-  console.log(`\nBest match: ${bestMatch.artist} - ${bestMatch.title}`);
+  console.log(`\nBest: ${bestMatch.artist} - ${bestMatch.title}`);
+  if (bestMatch.album) console.log(`Album: ${bestMatch.album}`);
+  if (bestMatch.year) console.log(`Year: ${bestMatch.year}`);
+  if (bestMatch.genre) console.log(`Genre: ${bestMatch.genre}`);
 
-  console.log('\n=== Downloading audio from YouTube ===');
+  console.log('\n=== Downloading ===');
 
   const tempAudioPath = await downloadYouTubeAudioWithTemp(selectedYoutube.url);
   
   if (!tempAudioPath) {
-    console.log('Failed to download audio.');
+    console.log('Download failed');
     process.exit(1);
   }
 
-  console.log('Audio downloaded successfully.');
+  console.log('Downloaded');
 
   const safeArtist = (bestMatch.artist || '').replace(/[<>:"/\\|?*]/g, '').trim();
   const safeTitle = (bestMatch.title || '').replace(/[<>:"/\\|?*]/g, '').trim();
@@ -126,9 +133,9 @@ async function main() {
   try {
     await mergeMetadata(tempAudioPath, metadata, outputPath);
     console.log(`\n=== SUCCESS ===`);
-    console.log(`File saved: ${outputPath}`);
+    console.log(`File: ${outputPath}`);
   } catch (err) {
-    console.error('Error saving file:', err.message);
+    console.error('Error:', err.message);
     process.exit(1);
   }
 }
