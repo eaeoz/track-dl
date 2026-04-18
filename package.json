@@ -1,6 +1,6 @@
 {
   "name": "track-dl",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Search and download music from YouTube using AI",
   "main": "index.js",
   "bin": {
