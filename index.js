@@ -54,6 +54,18 @@ async function main() {
     process.exit(0);
   }
 
+  if (firstArg === '-h' || firstArg === '--help') {
+    console.log(`track-dl v${packageJson.version}`);
+    console.log('');
+    console.log('Usage: track-dl song name');
+    console.log('Example: track-dl god is a dj');
+    console.log('');
+    console.log('Options:');
+    console.log('  -v, --version  Show version');
+    console.log('  -u, --update  Update yt-dlp.exe');
+    process.exit(0);
+  }
+
   if (firstArg === '-u' || firstArg === '--update') {
     try {
       await updateYtDlp();
