@@ -30,8 +30,8 @@ track-dl song name
 
 ```bash
 track-dl shape of you
-track-dl god is a dj
-track-dl umbrella rihanna
+track-dl --manual god is a dj
+track-dl -m umbrella rihanna
 ```
 
 ## Options
@@ -40,6 +40,7 @@ track-dl umbrella rihanna
 |--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe |
+| `-m, --manual` | Select song manually from YouTube results |
 
 ## Features
 

@@ -48,6 +48,7 @@ async function main() {
   }
 
   const firstArg = args[0];
+  let manualMode = false;
 
   if (firstArg === '-v' || firstArg === '--version') {
     console.log(`track-dl v${packageJson.version}`);
@@ -63,6 +64,7 @@ async function main() {
     console.log('Options:');
     console.log('  -v, --version  Show version');
     console.log('  -u, --update  Update yt-dlp.exe');
+    console.log('  -m, --manual  Select song manually from YouTube results');
     process.exit(0);
   }
 
@@ -74,6 +76,18 @@ async function main() {
       console.error('Failed to update:', err.message);
       process.exit(1);
     }
+  }
+
+  if (firstArg === '-m' || firstArg === '--manual') {
+    manualMode = true;
+    args.shift();
+  }
+
+  if (!args.length) {
+    console.log(`track-dl v${packageJson.version}`);
+    console.log('Usage: track-dl song name');
+    console.log('Example: track-dl god is a dj');
+    process.exit(1);
   }
 
   const query = args.join(' ');
@@ -89,7 +103,41 @@ async function main() {
 
   console.log(`Found ${youtubeResults.length} results`);
 
-  const bestMatch = await findBestSongMatch(query, youtubeResults);
+  let bestMatch;
+
+  if (manualMode) {
+    console.log('\n=== Select a song ===');
+    youtubeResults.forEach((video, index) => {
+      const duration = video.duration ? ` [${Math.floor(video.duration / 60)}:${String(video.duration % 60).padStart(2, '0')}]` : '';
+      console.log(`${index + 1}. ${video.title}${duration}`);
+      console.log(`   Channel: ${video.uploader}`);
+    });
+
+    const readline = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    const selectedIndex = await new Promise((resolve) => {
+      readline.question('\nEnter number (1-' + youtubeResults.length + '): ', (answer) => {
+        readline.close();
+        resolve(answer);
+      });
+    });
+
+    const index = parseInt(selectedIndex) - 1;
+    if (isNaN(index) || index < 0 || index >= youtubeResults.length) {
+      console.log('Invalid selection');
+      process.exit(1);
+    }
+
+    const selectedYoutube = youtubeResults[index];
+    bestMatch = await findBestSongMatch(query, [selectedYoutube]);
+    console.log(`\nSelected: ${selectedYoutube.title}`);
+  } else {
+    bestMatch = await findBestSongMatch(query, youtubeResults);
+  }
+
   const selectedYoutube = bestMatch.video;
 
   console.log(`\nBest: ${bestMatch.artist} - ${bestMatch.title}`);
