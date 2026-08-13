@@ -6,7 +6,7 @@ const https = require('https');
 const readline = require('readline');
 const { searchYouTube, downloadYouTubeAudioWithTemp } = require('./lib/youtube');
 const { mergeMetadata } = require('./lib/merger');
-const { findBestSongMatch, fetchSongInfoOptions, fetchCoverOptions, parseYouTubeTitle } = require('./lib/metadata');
+const { fetchSongInfoOptions, fetchCoverOptions, parseYouTubeTitle } = require('./lib/metadata');
 
 const packageJson = require('./package.json');
 
@@ -207,7 +207,6 @@ async function main() {
   }
 
   const firstArg = args[0];
-  let manualMode = false;
 
   if (firstArg === '-v' || firstArg === '--version') {
     console.log(`track-dl v${packageJson.version}`);
@@ -223,7 +222,6 @@ async function main() {
     console.log('Options:');
     console.log('  -v, --version  Show version');
     console.log('  -u, --update  Update yt-dlp.exe');
-    console.log('  -m, --manual  Select source, metadata and album cover manually');
     process.exit(0);
   }
 
@@ -238,7 +236,6 @@ async function main() {
   }
 
   if (firstArg === '-m' || firstArg === '--manual') {
-    manualMode = true;
     args.shift();
   }
 
@@ -253,8 +250,7 @@ async function main() {
 
   console.log(`\n=== Searching YouTube: "${query}" ===`);
 
-  const limit = manualMode ? MANUAL_LIMIT : 5;
-  const youtubeResults = await searchYouTube(query, limit);
+  const youtubeResults = await searchYouTube(query, MANUAL_LIMIT);
 
   if (!youtubeResults.length) {
     console.log('No results');
@@ -263,13 +259,7 @@ async function main() {
 
   console.log(`Found ${youtubeResults.length} results`);
 
-  let bestMatch;
-
-  if (manualMode) {
-    bestMatch = await manualSelect(query, youtubeResults);
-  } else {
-    bestMatch = await findBestSongMatch(query, youtubeResults);
-  }
+  const bestMatch = await manualSelect(query, youtubeResults);
 
   const selectedYoutube = bestMatch.video;
 

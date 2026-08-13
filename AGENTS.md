@@ -23,18 +23,18 @@ node index.js song name
 |--------|-------------|
 | `-v, --version` | Show version |
 | `-u, --update` | Update yt-dlp.exe |
-| `-m, --manual` | Select source, metadata and album cover manually (6 options per step) |
 
 ## How It Works
 
-1. Searches YouTube with query
+1. Searches YouTube with query (6 results)
 2. Fetches metadata from Deezer -> iTunes (artist, title, album, year, genre, cover)
-3. Matches best YouTube result
+3. Manually selects the YouTube source, metadata and album cover
 4. Downloads audio automatically
 5. Embeds metadata + album cover into MP3
 
-## Manual Mode (`-m`)
+## Manual Selection (default)
 
+The manual flow always runs (no `-m` flag needed; `-m` is still accepted for compatibility).
 Each step shows 6 options:
 1. Select a YouTube source
 2. Select metadata (artist, title, album, year, genre) from Deezer/iTunes
