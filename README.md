@@ -40,7 +40,7 @@ track-dl -m umbrella rihanna
 |--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe |
-| `-m, --manual` | Select song manually from YouTube results |
+| `-m, --manual` | Select source, metadata and album cover manually (6 options per step) |
 
 ## Features
 

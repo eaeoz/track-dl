@@ -3,11 +3,22 @@
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const readline = require('readline');
 const { searchYouTube, downloadYouTubeAudioWithTemp } = require('./lib/youtube');
 const { mergeMetadata } = require('./lib/merger');
-const { findBestSongMatch } = require('./lib/metadata');
+const { findBestSongMatch, fetchSongInfoOptions, fetchCoverOptions, parseYouTubeTitle } = require('./lib/metadata');
 
 const packageJson = require('./package.json');
+
+const MANUAL_LIMIT = 6;
+
+function sanitizeFilename(name) {
+  return (name || '')
+    .replace(/[<>:"\/\\|?*$`]/g, '')
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .replace(/[. ]+$/g, '')
+    .trim();
+}
 
 async function updateYtDlp() {
   const exePath = path.join(__dirname, 'yt-dlp.exe');
@@ -37,9 +48,157 @@ async function updateYtDlp() {
   await download('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe');
 }
 
+function formatDuration(duration) {
+  if (!duration) return '';
+  const m = Math.floor(duration / 60);
+  const s = String(duration % 60).padStart(2, '0');
+  return ` [${m}:${s}]`;
+}
+
+function showList(items, render) {
+  items.forEach((item, i) => render(i + 1, item));
+}
+
+function createPrompter() {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const queue = [];
+  let currentResolver = null;
+
+  rl.on('line', (line) => {
+    if (currentResolver) {
+      const resolver = currentResolver;
+      currentResolver = null;
+      resolver(line);
+    } else {
+      queue.push(line);
+    }
+  });
+
+  function question(text) {
+    process.stdout.write(text);
+    return new Promise((resolve) => {
+      if (queue.length) {
+        resolve(queue.shift());
+      } else {
+        currentResolver = resolve;
+      }
+    });
+  }
+
+  return {
+    question,
+    close: () => rl.close()
+  };
+}
+
+function promptNumber(prompter, max, allowSkip) {
+  const skip = allowSkip ? ', 0 to skip' : '';
+  return prompter.question(`Enter number (1-${max}${skip}): `).then((answer) => {
+    const num = parseInt(answer.trim(), 10);
+    if (allowSkip && num === 0) {
+      return 0;
+    }
+    if (isNaN(num) || num < 1 || num > max) {
+      return null;
+    }
+    return num;
+  });
+}
+
+async function manualSelect(query, youtubeResults) {
+  const prompter = createPrompter();
+
+  try {
+    console.log('\n=== Select a YouTube source ===');
+    showList(youtubeResults, (i, v) => {
+      console.log(`${i}. ${v.title}${formatDuration(v.duration)}`);
+      console.log(`   Channel: ${v.uploader}`);
+    });
+
+    const youtubeIndex = await promptNumber(prompter, youtubeResults.length, false);
+    if (!youtubeIndex) {
+      console.log('Invalid selection');
+      process.exit(1);
+    }
+    const selectedYoutube = youtubeResults[youtubeIndex - 1];
+    console.log(`\nSelected: ${selectedYoutube.title}`);
+
+    const parsed = parseYouTubeTitle(selectedYoutube.title);
+    const metaQuery = [parsed.artist, parsed.title].filter(Boolean).join(' ') || query;
+
+    console.log('\n=== Fetching metadata options ===');
+    const metadataOptions = await fetchSongInfoOptions(metaQuery, MANUAL_LIMIT);
+    let metadata;
+
+    if (metadataOptions.length) {
+      console.log(`\n=== Select metadata (1-${metadataOptions.length}, 0 to skip) ===`);
+      showList(metadataOptions, (i, m) => {
+        const album = m.album ? ` [${m.album}]` : '';
+        const year = m.year ? ` (${m.year})` : '';
+        console.log(`${i}. ${m.artist} - ${m.title}${album}${year} [${m.source}]`);
+      });
+      const metaIndex = await promptNumber(prompter, metadataOptions.length, true);
+      if (metaIndex === null) {
+        console.log('Invalid selection');
+        process.exit(1);
+      }
+      if (metaIndex > 0) {
+        metadata = metadataOptions[metaIndex - 1];
+        console.log(`\nSelected metadata: ${metadata.artist} - ${metadata.title}`);
+      } else {
+        console.log('\nSkipped metadata, will use YouTube title');
+      }
+    } else {
+      console.log('No metadata found, will use YouTube title');
+    }
+
+    let cover = null;
+    let coverOptions = [];
+    if (metadata) {
+      console.log('\n=== Fetching album cover options ===');
+      coverOptions = await fetchCoverOptions(metadata, MANUAL_LIMIT);
+    }
+
+    if (coverOptions.length) {
+      console.log(`\n=== Select album cover (1-${coverOptions.length}, 0 to skip) ===`);
+      showList(coverOptions, (i, c) => {
+        console.log(`${i}. ${c.label} [${c.source}]`);
+        console.log(`   ${c.url}`);
+      });
+      const coverIndex = await promptNumber(prompter, coverOptions.length, true);
+      if (coverIndex === null) {
+        console.log('Invalid selection');
+        process.exit(1);
+      }
+      if (coverIndex > 0) {
+        cover = coverOptions[coverIndex - 1];
+        console.log(`\nSelected cover: ${cover.label}`);
+      } else {
+        console.log('\nSkipped album cover');
+      }
+    } else if (metadata) {
+      console.log('No cover options found');
+    }
+
+    return {
+      index: youtubeIndex - 1,
+      reason: 'Manual selection',
+      artist: metadata?.artist || parsed.artist || selectedYoutube.uploader,
+      title: metadata?.title || parsed.title,
+      album: metadata?.album || '',
+      year: metadata?.year || '',
+      genre: metadata?.genre || '',
+      coverUrl: cover?.url || '',
+      video: selectedYoutube
+    };
+  } finally {
+    prompter.close();
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (!args.length) {
     console.log(`track-dl v${packageJson.version}`);
     console.log('Usage: track-dl song name');
@@ -64,7 +223,7 @@ async function main() {
     console.log('Options:');
     console.log('  -v, --version  Show version');
     console.log('  -u, --update  Update yt-dlp.exe');
-    console.log('  -m, --manual  Select song manually from YouTube results');
+    console.log('  -m, --manual  Select source, metadata and album cover manually');
     process.exit(0);
   }
 
@@ -93,9 +252,10 @@ async function main() {
   const query = args.join(' ');
 
   console.log(`\n=== Searching YouTube: "${query}" ===`);
-  
-  const youtubeResults = await searchYouTube(query, 5);
-  
+
+  const limit = manualMode ? MANUAL_LIMIT : 5;
+  const youtubeResults = await searchYouTube(query, limit);
+
   if (!youtubeResults.length) {
     console.log('No results');
     process.exit(1);
@@ -106,34 +266,7 @@ async function main() {
   let bestMatch;
 
   if (manualMode) {
-    console.log('\n=== Select a song ===');
-    youtubeResults.forEach((video, index) => {
-      const duration = video.duration ? ` [${Math.floor(video.duration / 60)}:${String(video.duration % 60).padStart(2, '0')}]` : '';
-      console.log(`${index + 1}. ${video.title}${duration}`);
-      console.log(`   Channel: ${video.uploader}`);
-    });
-
-    const readline = require('readline').createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    const selectedIndex = await new Promise((resolve) => {
-      readline.question('\nEnter number (1-' + youtubeResults.length + '): ', (answer) => {
-        readline.close();
-        resolve(answer);
-      });
-    });
-
-    const index = parseInt(selectedIndex) - 1;
-    if (isNaN(index) || index < 0 || index >= youtubeResults.length) {
-      console.log('Invalid selection');
-      process.exit(1);
-    }
-
-    const selectedYoutube = youtubeResults[index];
-    bestMatch = await findBestSongMatch(query, [selectedYoutube]);
-    console.log(`\nSelected: ${selectedYoutube.title}`);
+    bestMatch = await manualSelect(query, youtubeResults);
   } else {
     bestMatch = await findBestSongMatch(query, youtubeResults);
   }
@@ -148,7 +281,7 @@ async function main() {
   console.log('\n=== Downloading ===');
 
   const tempAudioPath = await downloadYouTubeAudioWithTemp(selectedYoutube.url);
-  
+
   if (!tempAudioPath) {
     console.log('Download failed');
     process.exit(1);
@@ -156,8 +289,8 @@ async function main() {
 
   console.log('Downloaded');
 
-  const safeArtist = (bestMatch.artist || '').replace(/[<>:"/\\|?*]/g, '').trim();
-  const safeTitle = (bestMatch.title || '').replace(/[<>:"/\\|?*]/g, '').trim();
+  const safeArtist = sanitizeFilename(bestMatch.artist);
+  const safeTitle = sanitizeFilename(bestMatch.title);
   const outputPath = path.join(process.cwd(), `${safeArtist} - ${safeTitle}.mp3`);
 
   const metadata = {
