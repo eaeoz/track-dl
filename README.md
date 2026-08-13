@@ -4,11 +4,6 @@ Search and download music from YouTube with automatic metadata and album cover.
 
 ## Quick Start
 
-### Run
-```bash
-node index.js song name
-```
-
 ### Install globally
 ```bash
 npm install -g track-dl
@@ -35,10 +30,13 @@ track-dl umbrella rihanna
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
 | `-v, --version` | Show version number |
 | `-u, --update` | Update yt-dlp.exe |
+
+### Run
+```bash
+node index.js song name
+```
 
 ## Features
 
