@@ -30,8 +30,8 @@ track-dl umbrella rihanna
 
 ## Options
 
-| `-v, --version` | Show version number |
-| `-u, --update` | Update yt-dlp.exe |
+- `-v, --version` | Show version number
+- `-u, --update` | Update yt-dlp.exe
 
 ### Run
 ```bash
